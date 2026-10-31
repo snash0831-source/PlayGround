@@ -1,5 +1,16 @@
 # PlayGround
 
+## Elemental Nexus — War of the Four
+
+A 3D arena battle between the four elements. Pick **Fire**, **Water**, **Earth**, or **Air**, then fight three rival avatars and shatter their nexuses before yours falls.
+
+- **Desktop:** WASD to move, mouse to aim, left click to cast, Shift to dash, E for your ultimate.
+- **Touch:** left stick to move, right stick to aim and cast, on-screen buttons for dash and ultimate.
+- **Objective:** destroy all three rival towers. Fallen avatars respawn at their own nexus.
+- **Tech:** static HTML/CSS/JavaScript with local Three.js, procedural low-poly art, and procedural WebAudio. No build step.
+
+Serve the folder from any static web server and open `index.html`.
+
 <!-- omgithub:readme:start -->
 ## 🚀 Build, play, and remix with OMGithub
 

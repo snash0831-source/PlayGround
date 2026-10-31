@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05060d" />
+  <meta name="description" content="Elemental Nexus — a 3D battle between the four elements. Choose your avatar and shatter the enemy nexuses." />
+  <title>Elemental Nexus — War of the Four</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2305060d'/%3E%3Cpath d='M32 6 54 32 32 58 10 32Z' fill='none' stroke='%23e8c88a' stroke-width='4'/%3E%3C/svg%3E" />
+  <link rel="preload" href="assets/fonts/cinzel-800.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/rajdhani-400.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="scene" aria-label="Elemental Nexus battle arena"></canvas>
+    <div id="vignette" aria-hidden="true"></div>
+    <div id="grain" aria-hidden="true"></div>
+    <div id="damageFlash" aria-hidden="true"></div>
+
+    <!-- Shared vector icons -->
+    <svg class="svg-defs" aria-hidden="true" focusable="false">
+      <defs>
+        <symbol id="icon-fire" viewBox="0 0 64 64">
+          <path class="solid" d="M34 3c3 11 13 16 13 29a15 15 0 0 1-30 .5C17 22 27 17 30 8c1 6 2.5 10 6 13 2-6 0-12-2-18Z"/>
+          <path class="cut" d="M33 28c1 6 6 8 6 15a7 7 0 0 1-14 .3c0-5 4-7 5-12 1 3 1.6 5 3 6.5Z"/>
+        </symbol>
+        <symbol id="icon-water" viewBox="0 0 64 64">
+          <path class="solid" d="M32 4C22 20 13 29 13 41a19 19 0 0 0 38 0C51 29 42 20 32 4Zm0 46c-7 0-12-5-12-12 0-6 5-11 10-18 1 10 9 12 9 20 0 6-3 10-7 10Z"/>
+          <path class="cut" d="M21 45c1 5 5 8 10 8"/>
+        </symbol>
+        <symbol id="icon-earth" viewBox="0 0 64 64">
+          <path class="solid" d="M4 55 20 20l9 14 8-10 23 31H4Z"/>
+          <path class="cut" d="M27 46l4-8 4 6 4-5 5 7H27Z"/>
+          <path class="solid" d="M45 8l3-6 3 6 6 3-6 3-3 6-3-6-6-3 6-3Z"/>
+        </symbol>
+        <symbol id="icon-air" viewBox="0 0 64 64">
+          <path class="line" d="M8 24h30a8 8 0 1 0-7-12M5 36h37a9 9 0 1 1-8 14M14 47h17"/>
+          <path class="solid" d="M50 17a6 6 0 1 0-5 9h3v-6h-3"/>
+        </symbol>
+        <symbol id="icon-dash" viewBox="0 0 64 64">
+          <path class="line" d="M34 12 16 32l18 20M50 12 32 32l18 20"/>
+        </symbol>
+        <symbol id="icon-ult" viewBox="0 0 64 64">
+          <path class="solid" d="M32 2l7 18 18 4-14 12 4 20-15-10-15 10 4-20L7 24l18-4 7-18Z"/>
+          <circle class="cut-fill" cx="32" cy="31" r="6"/>
+        </symbol>
+        <symbol id="icon-cast" viewBox="0 0 64 64">
+          <circle class="line" cx="32" cy="32" r="15"/>
+          <path class="line" d="M32 5v12M32 47v12M5 32h12M47 32h12"/>
+          <circle class="solid" cx="32" cy="32" r="4"/>
+        </symbol>
+        <symbol id="icon-sound-on" viewBox="0 0 64 64">
+          <path class="solid" d="M8 24h10l14-12v40L18 40H8V24Z"/>
+          <path class="line" d="M40 24c5 5 5 11 0 16M47 17c10 9 10 21 0 30"/>
+        </symbol>
+        <symbol id="icon-sound-off" viewBox="0 0 64 64">
+          <path class="solid" d="M8 24h10l14-12v40L18 40H8V24Z"/>
+          <path class="line" d="m40 24 16 16M56 24 40 40"/>
+        </symbol>
+        <symbol id="icon-pause" viewBox="0 0 64 64">
+          <path class="solid" d="M16 10h12v44H16zM36 10h12v44H36z"/>
+        </symbol>
+        <symbol id="icon-close" viewBox="0 0 64 64">
+          <path class="line" d="m16 16 32 32M48 16 16 48"/>
+        </symbol>
+        <symbol id="icon-tower" viewBox="0 0 64 64">
+          <path class="line" d="M24 56V22L32 8l8 14v34M18 56h28M27 30h10M27 40h10"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <!-- ============================== MENU ============================== -->
+    <section id="menu" class="screen menu-screen">
+      <div class="menu-top">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <span class="brand-word">OMNEXUS <b>ARENA</b></span>
+        </div>
+        <button id="soundBtn" class="icon-text-btn" aria-label="Toggle sound">
+          <svg class="icon"><use href="#icon-sound-on"></use></svg>
+          <span>Sound On</span>
+        </button>
+      </div>
+
+      <div class="menu-main">
+        <div class="title-block">
+          <div class="eyebrow"><span></span>THE FOURTH AGE OF THE NEXUS<span></span></div>
+          <h1 class="game-title"><span>ELEMENTAL</span><em>NEXUS</em></h1>
+          <p class="subtitle">Four avatars. Four towers. One survivor.</p>
+        </div>
+
+        <div id="elementGrid" class="element-grid" role="radiogroup" aria-label="Choose your element"></div>
+
+        <div class="menu-actions">
+          <button id="startBtn" class="btn-primary"><span class="btn-glint"></span>Start Game</button>
+          <button id="howBtn" class="btn-ghost">How to Play</button>
+        </div>
+
+        <div class="control-hint">
+          <span><kbd>WASD</kbd> Move</span><i></i>
+          <span><kbd>MOUSE</kbd> Aim</span><i></i>
+          <span><kbd>LMB</kbd> Cast</span><i></i>
+          <span><kbd>SHIFT</kbd> Dash</span><i></i>
+          <span><kbd>E</kbd> Ultimate</span>
+        </div>
+        <div class="control-hint touch-hint">
+          <span><kbd>LEFT STICK</kbd> Move</span><i></i>
+          <span><kbd>RIGHT STICK</kbd> Aim &amp; Cast</span><i></i>
+          <span><kbd>BUTTONS</kbd> Dash · Ultimate</span>
+        </div>
+      </div>
+
+      <div class="menu-foot">
+        <span class="foot-glyph">◇</span>
+        <span>Destroy the three rival nexuses. Defend your own.</span>
+        <span class="foot-glyph">◇</span>
+      </div>
+    </section>
+
+    <!-- ============================== HUD ============================== -->
+    <div id="hud" class="hidden" aria-hidden="true">
+      <div id="matchHud">
+        <div class="match-meta">
+          <span class="match-label">NEXUS WAR</span>
+          <span class="match-timer" id="matchTimer">00:00</span>
+          <span class="match-objective" id="objective">Destroy all three rival nexuses</span>
+        </div>
+        <div id="factionStrip"></div>
+      </div>
+
+      <div id="feed" aria-live="polite"></div>
+
+      <div id="playerPanel">
+        <div class="portrait-wrap">
+          <div class="portrait-ring"></div>
+          <div class="portrait" id="playerPortrait"></div>
+          <div class="portrait-level" id="playerLevel">I</div>
+        </div>
+        <div class="player-meta">
+          <div class="player-name-row">
+            <span id="playerName">PYRA</span>
+            <em id="playerRole">FIRE AVATAR</em>
+          </div>
+          <div class="bar hp-bar"><i id="playerHpFill"></i><b id="playerHpTicks"></b></div>
+          <div class="player-numbers"><span id="playerHpText">320 / 320</span><span id="playerState">READY</span></div>
+          <div class="ult-row">
+            <span class="ult-tag">ULT</span>
+            <div class="bar ult-bar"><i id="playerUltFill"></i></div>
+            <span id="playerUltText">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="abilities"></div>
+
+      <aside id="minimapPanel">
+        <div class="minimap-head"><span>NEXUS MAP</span><em id="minimapTowers">4 TOWERS</em></div>
+        <div class="minimap-frame"><canvas id="minimap" width="188" height="188"></canvas><span class="map-n">N</span></div>
+      </aside>
+
+      <div id="banner" class="hidden"><span class="banner-kicker" id="bannerKicker"></span><strong id="bannerText"></strong></div>
+      <div id="respawnOverlay" class="hidden"><span>YOU HAVE FALLEN</span><strong id="respawnTimer">6.0</strong><em>Reforming at your nexus</em></div>
+      <div id="crosshair" class="hidden"><span class="ch-ring"></span><span class="ch-dot"></span><span class="ch-tick t1"></span><span class="ch-tick t2"></span><span class="ch-tick t3"></span><span class="ch-tick t4"></span></div>
+      <button id="pauseBtn" class="icon-btn" aria-label="Pause game"><svg class="icon"><use href="#icon-pause"></use></svg></button>
+      <div id="powerHint" class="hidden"></div>
+    </div>
+
+    <!-- ============================== TOUCH ============================== -->
+    <div id="touchControls" class="hidden" aria-hidden="true">
+      <div id="moveStick" class="stick"><div class="stick-ring"></div><div class="stick-knob"></div><span class="stick-label">MOVE</span></div>
+      <div id="aimStick" class="stick aim"><div class="stick-ring"></div><div class="stick-knob"></div><span class="stick-label">AIM · CAST</span></div>
+      <button id="touchDash" class="touch-btn" aria-label="Dash"><svg class="icon"><use href="#icon-dash"></use></svg><i></i></button>
+      <button id="touchUlt" class="touch-btn ult" aria-label="Ultimate"><svg class="icon"><use href="#icon-ult"></use></svg><i></i></button>
+    </div>
+
+    <!-- ============================== MODALS ============================== -->
+    <div id="howModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+      <div class="modal-panel">
+        <button id="howClose" class="icon-btn modal-close" aria-label="Close"><svg class="icon"><use href="#icon-close"></use></svg></button>
+        <div class="eyebrow center"><span></span>FIELD MANUAL<span></span></div>
+        <h2 id="howTitle">How to Play</h2>
+        <div class="how-grid">
+          <div class="how-block">
+            <h3>The Objective</h3>
+            <p>Three rival elements share the Nexus. Shatter their crystal towers while keeping yours alive. The last tower standing claims the arena.</p>
+            <div class="how-objective"><svg class="icon"><use href="#icon-tower"></use></svg><span>Each nexus has <b>950</b> integrity. Towers fire defensive bolts at anything that comes close.</span></div>
+          </div>
+          <div class="how-block">
+            <h3>Controls</h3>
+            <ul class="key-list">
+              <li><kbd>W A S D</kbd><span>Move your avatar</span></li>
+              <li><kbd>MOUSE</kbd><span>Aim your element</span></li>
+              <li><kbd>LMB / SPACE</kbd><span>Cast basic attack</span></li>
+              <li><kbd>SHIFT</kbd><span>Elemental dash (brief immunity)</span></li>
+              <li><kbd>E</kbd><span>Ultimate — when fully charged</span></li>
+              <li><kbd>WHEEL / ESC</kbd><span>Zoom · Pause</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="how-tips">
+          <h3>Elemental Doctrine</h3>
+          <div class="tip-grid">
+            <div class="tip fire"><b>Fire</b><span>Splash and burn. Meteor Fall cracks clustered foes and towers.</span></div>
+            <div class="tip water"><b>Water</b><span>Slow and sustain. Maelstrom heals you and your nexus.</span></div>
+            <div class="tip earth"><b>Earth</b><span>Heavy impacts, bonus tower damage. Cataclysm stuns.</span></div>
+            <div class="tip air"><b>Air</b><span>Rapid twin bolts. Cyclone drags enemies into the vortex.</span></div>
+          </div>
+        </div>
+        <p class="how-foot">Damage fills your ultimate. Bank health by fighting near your own nexus. On touch devices, use the twin sticks: left to move, right to aim and cast.</p>
+      </div>
+    </div>
+
+    <div id="pauseScreen" class="screen overlay hidden" role="dialog" aria-modal="true">
+      <div class="pause-panel">
+        <span class="eyebrow center"><span></span>THE NEXUS WAITS<span></span></span>
+        <h2>PAUSED</h2>
+        <div class="pause-actions">
+          <button id="resumeBtn" class="btn-primary small">Resume Battle</button>
+          <button id="restartBtn" class="btn-ghost">Restart Battle</button>
+          <button id="quitBtn" class="btn-ghost">Change Element</button>
+        </div>
+        <p class="pause-note">Press <kbd>ESC</kbd> to return to the battle.</p>
+      </div>
+    </div>
+
+    <div id="endScreen" class="screen overlay hidden" role="dialog" aria-modal="true">
+      <div class="end-panel">
+        <span class="end-kicker" id="endKicker">THE NEXUS IS SILENT</span>
+        <h2 id="endTitle">VICTORY</h2>
+        <p id="endSubtitle">The Fire Nexus stands alone.</p>
+        <div class="end-emblem" id="endEmblem"></div>
+        <div class="end-stats" id="endStats"></div>
+        <div class="end-actions">
+          <button id="againBtn" class="btn-primary small">Play Again</button>
+          <button id="changeBtn" class="btn-ghost">Change Element</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="rotateHint" class="hidden"><span>↻</span> Rotate your device for the full arena</div>
+  </div>
+
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
