@@ -2,7 +2,7 @@
 
 ## Elemental Nexus — War of the Four
 
-A 3D arena battle between the four elements. Pick **Fire**, **Water**, **Earth**, or **Air**, then fight three rival avatars and shatter their nexuses before yours falls.
+A 3D arena battle between the four elements. Pick **Pyra** (Fire), **Naia** (Water), **Terrus** (Earth), or **Zephyra** (Air), then fight three rival avatars and shatter their nexuses before yours falls.
 
 - **Desktop:** WASD to move, mouse to aim, left click to cast, Shift to dash, E for your ultimate.
 - **Touch:** left stick to move, right stick to aim and cast, on-screen buttons for dash and ultimate.
