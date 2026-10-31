@@ -371,6 +371,39 @@ kbd {
 .card-glyph .icon { width: 44px; height: 44px; stroke-width: 2.6; filter: drop-shadow(0 0 6px var(--cs)); }
 .card-glyph .icon .solid { fill: currentColor; }
 .card-glyph .icon .line { stroke: currentColor; }
+.card-glyph.avatar { position: relative; filter: none; }
+.glyph-portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--c) 62%, transparent);
+  background: radial-gradient(circle at 50% 28%, var(--cs), rgba(7, 10, 20, 0.94) 76%);
+  box-shadow: 0 0 20px -7px var(--c), inset 0 0 14px -7px var(--c);
+}
+.glyph-portrait .avatar-portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.2);
+  transform-origin: 50% 30%;
+}
+.glyph-element {
+  position: absolute;
+  right: -5px;
+  bottom: -3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #090b16;
+  border: 1px solid color-mix(in srgb, var(--c) 76%, transparent);
+  display: grid;
+  place-items: center;
+  color: var(--c);
+  box-shadow: 0 0 10px -2px var(--c);
+}
+.glyph-element .icon { width: 12px; height: 12px; stroke-width: 3; filter: none; }
 .card-check {
   position: absolute;
   top: 12px; right: 12px;
@@ -705,6 +738,13 @@ kbd {
   color: var(--pick);
   background: radial-gradient(circle at 38% 32%, color-mix(in srgb, var(--pick) 34%, transparent), rgba(6, 9, 20, 0.9) 70%);
   box-shadow: inset 0 0 18px -4px var(--pick);
+  overflow: hidden;
+}
+.portrait .avatar-portrait {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scale(1.25);
+  transform-origin: 50% 28%;
 }
 .portrait .icon { width: 27px; height: 27px; filter: drop-shadow(0 0 8px var(--pick)); }
 .portrait-level {
@@ -1175,6 +1215,8 @@ body.touch #minimapPanel, body.touch #feed { display: none; }
   .card-role { font-size: 7.5px; }
   .card-glyph { height: 34px; width: 34px; }
   .card-glyph .icon { width: 28px; height: 28px; }
+  .glyph-element { width: 16px; height: 16px; right: -3px; bottom: -2px; }
+  .glyph-element .icon { width: 9px; height: 9px; }
   .card-check { top: 8px; right: 8px; width: 14px; height: 14px; font-size: 8px; }
   .menu-actions { gap: 8px; }
   .btn-primary { font-size: 12px; padding: 12px 14px 11px; letter-spacing: 0.14em; }

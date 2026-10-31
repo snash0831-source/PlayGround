@@ -13,6 +13,10 @@ function icon(id) {
   return `<svg class="icon" aria-hidden="true"><use href="#icon-${id}"></use></svg>`;
 }
 
+function portrait(id) {
+  return `<img class="avatar-portrait" src="assets/portraits/${id}.png" alt="" draggable="false" />`;
+}
+
 function roman(n) {
   return ['I', 'II', 'III', 'IV'][n] || 'I';
 }
@@ -85,7 +89,10 @@ export class UI {
       btn.setAttribute('aria-label', `${el.name} — ${el.role}`);
       btn.innerHTML = `
         <span class="card-check">&#10003;</span>
-        <span class="card-glyph">${icon(id)}</span>
+        <span class="card-glyph avatar">
+          <span class="glyph-portrait">${portrait(id)}</span>
+          <span class="glyph-element">${icon(id)}</span>
+        </span>
         <span class="card-name">${el.name.toUpperCase()}</span>
         <span class="card-role">${el.role}</span>
         <span class="card-desc">${el.desc}</span>
@@ -127,7 +134,7 @@ export class UI {
     root.style.setProperty('--pick', el.css);
     root.style.setProperty('--pick-bright', el.brightCss);
     root.style.setProperty('--pick-soft', `${el.css}33`);
-    if (this.portrait) this.portrait.innerHTML = icon(id);
+    if (this.portrait) this.portrait.innerHTML = portrait(id);
   }
 
   getSelected() {
@@ -180,7 +187,7 @@ export class UI {
     document.documentElement.style.setProperty('--pick', el.css);
     document.documentElement.style.setProperty('--pick-bright', el.brightCss);
     document.documentElement.style.setProperty('--pick-soft', `${el.css}33`);
-    this.portrait.innerHTML = icon(player.id);
+    this.portrait.innerHTML = portrait(player.id);
     $('playerName').textContent = el.avatar.toUpperCase();
     $('playerRole').textContent = `${el.name.toUpperCase()} AVATAR`;
     $('playerLevel').textContent = roman(this.selectedIndex);
