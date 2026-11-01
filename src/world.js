@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { ARENA_RADIUS, TOWER_RADIUS, PLAY_RADIUS, ELEMENTS, ELEMENT_IDS, CENTER_RADIUS } from './config.js';
+import { toonMaterial, addInkOutlines } from './toon.js';
 
 const TAU = Math.PI * 2;
 
@@ -124,18 +125,26 @@ export function createWorld(scene) {
       uniform float uTime;
       void main() {
         vec3 d = normalize(vDir);
-        float h = clamp(d.y * 0.62 + 0.52, 0.0, 1.0);
-        vec3 low = vec3(0.075, 0.065, 0.135);
-        vec3 mid = vec3(0.024, 0.032, 0.086);
-        vec3 top = vec3(0.005, 0.007, 0.024);
-        vec3 col = mix(low, mid, smoothstep(0.16, 0.55, h));
-        col = mix(col, top, smoothstep(0.48, 1.0, h));
-        float halo = pow(max(0.0, 1.0 - abs(d.y - 0.16) * 2.1), 4.0);
-        col += vec3(0.20, 0.10, 0.30) * halo * 0.42;
-        float band = sin(d.x * 5.2 + uTime * 0.012) * sin(d.z * 4.1 - uTime * 0.009 + 1.2);
-        col += vec3(0.045, 0.10, 0.13) * smoothstep(0.55, 1.0, band) * smoothstep(0.0, 0.6, d.y) * 0.5;
-        float vign = smoothstep(-0.35, 0.15, d.y);
-        col *= 0.78 + 0.22 * vign;
+        float h = clamp(d.y * 0.68 + 0.46, 0.0, 1.0);
+        vec3 low = vec3(1.0, 0.86, 0.64);
+        vec3 mid = vec3(0.64, 0.83, 0.96);
+        vec3 top = vec3(0.24, 0.51, 0.87);
+        vec3 col = mix(low, mid, smoothstep(0.02, 0.4, h));
+        col = mix(col, top, smoothstep(0.4, 0.96, h));
+
+        /* painterly sun */
+        vec3 sunDir = normalize(vec3(-0.4, 0.28, -0.65));
+        float sun = pow(max(0.0, dot(d, sunDir)), 28.0);
+        float sunGlow = pow(max(0.0, dot(d, sunDir)), 5.0);
+        col += vec3(1.0, 0.86, 0.55) * sun * 0.5;
+        col += vec3(1.0, 0.92, 0.72) * sunGlow * 0.16;
+
+        /* wide, soft cloud bands */
+        float band = sin(d.x * 4.6 + d.z * 2.4 + uTime * 0.008) * sin(d.z * 5.4 - d.x * 1.8 - uTime * 0.006);
+        float cloud = smoothstep(0.28, 0.82, band) * smoothstep(0.04, 0.5, h) * (1.0 - smoothstep(0.72, 1.0, h));
+        col = mix(col, vec3(1.0, 0.98, 0.92), cloud * 0.34);
+        float wisp = smoothstep(0.58, 0.95, sin(d.x * 9.0 - d.z * 3.2 + uTime * 0.01));
+        col = mix(col, vec3(1.0, 0.99, 0.95), wisp * 0.1 * smoothstep(0.08, 0.4, h));
         gl_FragColor = vec4(col, 1.0);
       }
     `
@@ -178,13 +187,13 @@ export function createWorld(scene) {
   });
   const stars = new THREE.Points(starGeo, starMat);
   stars.frustumCulled = false;
+  stars.visible = false;
   group.add(stars);
-  updaters.push((t, dt) => { stars.rotation.y += dt * 0.0025; });
 
   /* lights */
-  const hemi = new THREE.HemisphereLight(0x8296ff, 0x2a160f, 1.55);
+  const hemi = new THREE.HemisphereLight(0xcfe8ff, 0xb08a5e, 1.9);
   scene.add(hemi);
-  const key = new THREE.DirectionalLight(0xfff1da, 2.5);
+  const key = new THREE.DirectionalLight(0xfff2cf, 2.35);
   key.position.set(-30, 46, 20);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
@@ -197,17 +206,17 @@ export function createWorld(scene) {
   key.shadow.bias = -0.0006;
   key.shadow.normalBias = 0.02;
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0x5f63ff, 0.85);
+  const rim = new THREE.DirectionalLight(0x86b5ff, 0.42);
   rim.position.set(26, 18, -38);
   scene.add(rim);
-  const fill = new THREE.DirectionalLight(0xff8a4a, 0.35);
+  const fill = new THREE.DirectionalLight(0xffc48d, 0.3);
   fill.position.set(10, 8, 30);
   scene.add(fill);
 
   /* arena base */
-  const rockMat = new THREE.MeshStandardMaterial({ color: 0x171821, roughness: 0.94, metalness: 0.06, flatShading: true });
-  const rockMat2 = new THREE.MeshStandardMaterial({ color: 0x232431, roughness: 0.9, metalness: 0.08, flatShading: true });
-  const rockMat3 = new THREE.MeshStandardMaterial({ color: 0x2c2b3a, roughness: 0.88, metalness: 0.1, flatShading: true });
+  const rockMat = toonMaterial({ color: 0x8c785d });
+  const rockMat2 = toonMaterial({ color: 0xa38e6d });
+  const rockMat3 = toonMaterial({ color: 0x79684f });
 
   const base = new THREE.Mesh(new THREE.CylinderGeometry(ARENA_RADIUS + 0.5, ARENA_RADIUS - 3.5, 4.2, 72, 1), rockMat);
   base.position.y = -2.1;
@@ -221,11 +230,11 @@ export function createWorld(scene) {
 
   /* arena top vertex-coloured disc */
   const palette = {
-    neutral: new THREE.Color(0x2f2d3a),
-    fire: new THREE.Color(0x5a2418),
-    water: new THREE.Color(0x153b4c),
-    earth: new THREE.Color(0x2c3d1c),
-    air: new THREE.Color(0x2a2149)
+    neutral: new THREE.Color(0xc8b48d),
+    fire: new THREE.Color(0xc36a46),
+    water: new THREE.Color(0x4c96a8),
+    earth: new THREE.Color(0x7d8c4b),
+    air: new THREE.Color(0x8c7eb9)
   };
   const discGeo = new THREE.CircleGeometry(ARENA_RADIUS, 224);
   discGeo.rotateX(-Math.PI / 2);
@@ -241,21 +250,21 @@ export function createWorld(scene) {
     const outer = THREE.MathUtils.smoothstep(r, 6, 33);
     tmp.lerp(palette.neutral, (1 - outer) * 0.55);
     const n = Math.sin(x * 1.7 + z * 2.3) * Math.cos(x * 0.7 - z * 1.1);
-    tmp.multiplyScalar(0.86 + n * 0.09);
-    if (r > ARENA_RADIUS - 1.5) tmp.multiplyScalar(0.72);
+    tmp.multiplyScalar(0.94 + n * 0.05);
+    if (r > ARENA_RADIUS - 1.5) tmp.multiplyScalar(0.82);
     dcol[i * 3] = tmp.r;
     dcol[i * 3 + 1] = tmp.g;
     dcol[i * 3 + 2] = tmp.b;
   }
   discGeo.setAttribute('color', new THREE.BufferAttribute(dcol, 3));
-  const discMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, metalness: 0.1 });
+  const discMat = toonMaterial({ vertexColors: true, roughness: 0.88, metalness: 0.1 });
   const disc = new THREE.Mesh(discGeo, discMat);
   disc.position.y = 0.02;
   disc.receiveShadow = true;
   group.add(disc);
 
   /* rim */
-  const rimMat = new THREE.MeshStandardMaterial({ color: 0x4a3c28, roughness: 0.6, metalness: 0.32, emissive: 0x3a2a12, emissiveIntensity: 0.35 });
+  const rimMat = toonMaterial({ color: 0x9a7a4f, emissive: 0x4a3214, emissiveIntensity: 0.2 });
   const rimRing = new THREE.Mesh(new THREE.TorusGeometry(ARENA_RADIUS - 0.5, 0.28, 6, 120), rimMat);
   rimRing.rotation.x = Math.PI / 2;
   rimRing.position.y = 0.12;
@@ -280,7 +289,7 @@ export function createWorld(scene) {
   }
 
   /* central dais */
-  const daisMat = new THREE.MeshStandardMaterial({ color: 0x373442, roughness: 0.7, metalness: 0.22 });
+  const daisMat = toonMaterial({ color: 0xb9a27b });
   const dais = new THREE.Mesh(new THREE.CylinderGeometry(CENTER_RADIUS, CENTER_RADIUS + 0.6, 0.55, 64), daisMat);
   dais.position.y = 0.275;
   dais.receiveShadow = true;
@@ -314,7 +323,7 @@ export function createWorld(scene) {
   });
 
   /* centre crystal */
-  const coreMat = new THREE.MeshStandardMaterial({ color: 0xdff3ff, emissive: 0x86d7ff, emissiveIntensity: 1.8, roughness: 0.16, metalness: 0.2, flatShading: true });
+  const coreMat = toonMaterial({ color: 0xeafaff, emissive: 0x86d7ff, emissiveIntensity: 1.15 });
   const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.85, 0), coreMat);
   core.position.y = 2.1;
   core.castShadow = true;
@@ -360,7 +369,7 @@ export function createWorld(scene) {
   /* rocks and crystals */
   const rockGeo = new THREE.DodecahedronGeometry(1, 0);
   const crystalGeo = new THREE.OctahedronGeometry(1, 0);
-  const mossMat = new THREE.MeshStandardMaterial({ color: 0x32451f, roughness: 0.96, flatShading: true });
+  const mossMat = toonMaterial({ color: 0x6f8e42 });
   const rockMaterials = [rockMat2, rockMat3];
   const sectorStart = -Math.PI / 2;
 
@@ -447,7 +456,7 @@ export function createWorld(scene) {
     const poolR = 21;
     const pool = new THREE.Mesh(
       new THREE.CircleGeometry(5.2, 48),
-      new THREE.MeshStandardMaterial({ color: 0x0d5f82, emissive: 0x0a4f6e, emissiveIntensity: 0.55, roughness: 0.12, metalness: 0.5, transparent: true, opacity: 0.78 })
+      toonMaterial({ color: 0x3d9cb6, emissive: 0x1b6d83, emissiveIntensity: 0.28, transparent: true, opacity: 0.8 })
     );
     pool.rotation.x = -Math.PI / 2;
     pool.position.set(Math.cos(poolA) * poolR, 0.08, Math.sin(poolA) * poolR);
@@ -466,7 +475,7 @@ export function createWorld(scene) {
       const a = ELEMENTS.water.angle + (rand() - 0.5) * 1.3;
       const r = 17 + rand() * 15;
       const h = 0.8 + rand() * 2.6;
-      const ice = new THREE.Mesh(new THREE.OctahedronGeometry(h * 0.45, 0), new THREE.MeshStandardMaterial({ color: 0xa8efff, emissive: 0x2b9fc4, emissiveIntensity: 0.55, roughness: 0.1, metalness: 0.18, transparent: true, opacity: 0.82, flatShading: true }));
+      const ice = new THREE.Mesh(new THREE.OctahedronGeometry(h * 0.45, 0), toonMaterial({ color: 0xc4f5ff, emissive: 0x2b9fc4, emissiveIntensity: 0.35, transparent: true, opacity: 0.88 }));
       ice.position.set(Math.cos(a) * r, h * 0.36, Math.sin(a) * r);
       ice.scale.y = 1.6 + rand() * 1.4;
       ice.rotation.y = rand() * TAU;
@@ -495,7 +504,7 @@ export function createWorld(scene) {
     for (let k = 0; k < 6; k++) {
       const a = ELEMENTS.earth.angle + (rand() - 0.5) * 1.3;
       const r = 15 + rand() * 16;
-      const crystal = new THREE.Mesh(crystalGeo, new THREE.MeshStandardMaterial({ color: 0xcff79a, emissive: 0x74c22e, emissiveIntensity: 1.2, roughness: 0.2, metalness: 0.15, flatShading: true }));
+      const crystal = new THREE.Mesh(crystalGeo, toonMaterial({ color: 0xc8ee89, emissive: 0x74c22e, emissiveIntensity: 0.55 }));
       crystal.position.set(Math.cos(a) * r, 0.6 + rand() * 0.8, Math.sin(a) * r);
       crystal.scale.set(0.35, 1.4 + rand(), 0.35);
       crystal.rotation.z = (rand() - 0.5) * 0.7;
@@ -551,7 +560,7 @@ export function createWorld(scene) {
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(3.5 + rand() * 2.5, 2.4, 1.2, 6), rockMat2);
     cap.position.y = 1.2;
     island.add(cap);
-    const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.55 + rand() * 0.6, 0), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, emissive: ELEMENTS[ELEMENT_IDS[i % 4]].color, emissiveIntensity: 1.4, flatShading: true }));
+    const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.55 + rand() * 0.6, 0), toonMaterial({ color: 0xcfe8ff, emissive: ELEMENTS[ELEMENT_IDS[i % 4]].color, emissiveIntensity: 1.4, flatShading: true }));
     shard.position.y = 2.1;
     island.add(shard);
     island.position.set(Math.cos(a) * r, -7 - rand() * 17, Math.sin(a) * r);
@@ -656,6 +665,8 @@ export function createWorld(scene) {
     }
   }
 
+  addInkOutlines(group, { thickness: 0.055, color: 0x2a231c, minRadius: 0.95, maxRadius: 12.5 });
+
   return { group, update, glowTexture: glow };
 }
 
@@ -668,17 +679,16 @@ export function createTower(id) {
   const glow = glowTexture();
   const updaters = [];
 
-  const stone = new THREE.MeshStandardMaterial({ color: el.dark, roughness: 0.86, metalness: 0.16, flatShading: true });
-  const stoneMid = new THREE.MeshStandardMaterial({ color: el.mid, roughness: 0.8, metalness: 0.2, flatShading: true });
-  const crystalMat = new THREE.MeshStandardMaterial({
-    color: el.bright,
-    emissive: el.color,
-    emissiveIntensity: 1.35,
-    roughness: 0.18,
-    metalness: 0.22,
-    flatShading: true
+  const stoneColor = new THREE.Color(el.color).lerp(new THREE.Color(0xd9c5a0), 0.54);
+  const midColor = new THREE.Color(el.color).lerp(new THREE.Color(0xf0e0bd), 0.4);
+  const stone = toonMaterial({ color: stoneColor });
+  const stoneMid = toonMaterial({ color: midColor });
+  const crystalMat = toonMaterial({
+    color: el.color,
+    emissive: el.deep,
+    emissiveIntensity: 0.4
   });
-  const coreMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: el.color, emissiveIntensity: 2.4, roughness: 0.1, metalness: 0.1 });
+  const coreMat = toonMaterial({ color: 0xfff8e6, emissive: el.color, emissiveIntensity: 1.35 });
   const energyMat = new THREE.MeshBasicMaterial({ color: el.color, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending, depthWrite: false });
 
   /* base */
@@ -953,6 +963,8 @@ export function createTower(id) {
 
     hitFlash = Math.max(0, hitFlash - dt * 3.4);
   }
+
+  addInkOutlines(group, { thickness: 0.075, color: 0x2b241e, minRadius: 0.3 });
 
   return {
     id,

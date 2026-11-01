@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { ELEMENTS, AVATAR_MAX_HP } from './config.js';
 import { glowTexture } from './world.js';
+import { toonMaterial, addInkOutlines } from './toon.js';
 
 const TAU = Math.PI * 2;
 const SKIN = 0xd49a72;
@@ -13,13 +14,10 @@ function canvas2d(w, h) {
 }
 
 function std(color, opts = {}) {
-  return new THREE.MeshStandardMaterial({
+  return toonMaterial({
     color,
-    roughness: opts.roughness ?? 0.62,
-    metalness: opts.metalness ?? 0.25,
     emissive: opts.emissive ?? 0x000000,
     emissiveIntensity: opts.emissiveIntensity ?? 0,
-    flatShading: opts.flatShading ?? true,
     transparent: opts.transparent ?? false,
     opacity: opts.opacity ?? 1,
     side: opts.side ?? THREE.FrontSide
@@ -27,7 +25,7 @@ function std(color, opts = {}) {
 }
 
 function soft(color, opts = {}) {
-  return std(color, { ...opts, flatShading: false, metalness: opts.metalness ?? 0.02, roughness: opts.roughness ?? 0.76 });
+  return std(color, opts);
 }
 
 function add(parent, geo, material, pos = [0, 0, 0], rot = [0, 0, 0], scale = [1, 1, 1]) {
@@ -112,15 +110,12 @@ function createRig(id) {
   const armorMat = std(el.dark, { roughness: 0.5, metalness: 0.35, emissive: el.deep, emissiveIntensity: 0.12 });
   const accentMat = std(0x0a0a0a, { roughness: 0.2, metalness: 0.1, emissive: el.color, emissiveIntensity: 2.1 });
   const brightMat = std(el.bright, { roughness: 0.3, metalness: 0.35, emissive: el.color, emissiveIntensity: 0.55 });
-  const glassMat = new THREE.MeshStandardMaterial({
+  const glassMat = toonMaterial({
     color: el.bright,
-    roughness: 0.08,
-    metalness: 0.15,
     emissive: el.color,
     emissiveIntensity: 0.55,
     transparent: true,
     opacity: 0.55,
-    flatShading: true,
     side: THREE.DoubleSide
   });
   const skinMat = soft(SKIN, { roughness: 0.82, emissive: 0x2b0f07, emissiveIntensity: 0.1 });
@@ -594,11 +589,12 @@ function styleAir(rig) {
   /* spiral air sigil on the forehead */
   const sigil = add(headGroup, new THREE.TorusGeometry(0.055, 0.012, 4, 14, Math.PI * 1.45), rig.accentMat, [0, 0.245, 0.392], [0, 0, 0.5]);
   sigil.castShadow = false;
+  sigil.userData.noOutline = true;
   add(headGroup, new THREE.SphereGeometry(0.014, 5, 4), rig.accentMat, [0.02, 0.25, 0.398]);
 
   /* scarf ribbons */
   const ribbons = [];
-  const ribbonMat = new THREE.MeshStandardMaterial({ color: 0xc3b0ff, transparent: true, opacity: 0.72, side: THREE.DoubleSide, emissive: 0x8c6cff, emissiveIntensity: 0.4, roughness: 0.5 });
+  const ribbonMat = toonMaterial({ color: 0xc3b0ff, transparent: true, opacity: 0.78, side: THREE.DoubleSide, emissive: 0x8c6cff, emissiveIntensity: 0.4 });
   for (let i = 0; i < 3; i++) {
     const ribbon = tube(body, [
       [(i - 1) * 0.16, 2.78, -0.2], [(i - 1) * 0.22, 2.55, -0.55], [(i - 1) * 0.3, 2.2, -0.9], [(i - 1) * 0.36, 1.8, -1.12]
@@ -610,6 +606,7 @@ function styleAir(rig) {
   const halo = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.03, 4, 40), accentMat);
   halo.position.y = 0.6;
   halo.rotation.x = Math.PI / 2;
+  halo.userData.noOutline = true;
   headGroup.add(halo);
 
   const swirl = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.028, 3, 40, Math.PI * 1.4), new THREE.MeshBasicMaterial({ color: 0xd9ccff, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -636,6 +633,8 @@ export function createAvatar(id) {
   if (id === 'water') styleWater(rig);
   if (id === 'earth') styleEarth(rig);
   if (id === 'air') styleAir(rig);
+
+  addInkOutlines(rig.root, { thickness: 0.038, color: 0x17141c, minRadius: 0.09 });
 
   const state = {
     time: Math.random() * 10,

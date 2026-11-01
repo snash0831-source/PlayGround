@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { glowTexture } from './world.js';
 import { ELEMENTS } from './config.js';
+import { toonMaterial } from './toon.js';
 
 const TAU = Math.PI * 2;
 
@@ -350,7 +351,7 @@ export class FX {
   }
 
   debris(x, y, z, color, count = 18, opts = {}) {
-    const mat = new THREE.MeshStandardMaterial({
+    const mat = toonMaterial({
       color: opts.dark ? 0x2a2630 : color,
       emissive: color,
       emissiveIntensity: opts.emissive ?? 0.35,
@@ -402,7 +403,7 @@ export class FX {
       group.add(halo);
       group.userData.halo = halo;
     } else if (id === 'earth') {
-      core = new THREE.Mesh(new THREE.DodecahedronGeometry(small ? 0.24 : 0.38, 0), new THREE.MeshStandardMaterial({ color: 0x655f4b, emissive: el.color, emissiveIntensity: 0.5, roughness: 0.9, flatShading: true }));
+      core = new THREE.Mesh(new THREE.DodecahedronGeometry(small ? 0.24 : 0.38, 0), toonMaterial({ color: 0x655f4b, emissive: el.color, emissiveIntensity: 0.5, roughness: 0.9, flatShading: true }));
     } else {
       core = new THREE.Mesh(new THREE.OctahedronGeometry(small ? 0.15 : 0.22, 0), coreMat);
       core.scale.set(0.55, 0.55, 2.4);
@@ -422,7 +423,7 @@ export class FX {
     const height = opts.height ?? 34;
     const duration = opts.duration ?? 0.85;
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color: 0x352018, emissive: color, emissiveIntensity: 1.4, roughness: 0.8, flatShading: true });
+    const mat = toonMaterial({ color: 0x352018, emissive: color, emissiveIntensity: 1.4, roughness: 0.8, flatShading: true });
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.9, 0), mat);
     group.add(rock);
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glow, color, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));

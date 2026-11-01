@@ -18,13 +18,13 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.08;
+renderer.toneMappingExposure = 1.12;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x05060d);
-scene.fog = new THREE.FogExp2(0x070a16, 0.006);
+scene.background = new THREE.Color(0xa8d0e8);
+scene.fog = new THREE.FogExp2(0xd3e4ec, 0.0029);
 
 const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.4, 420);
 camera.position.set(0, 27, 54);
